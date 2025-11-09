@@ -31,8 +31,8 @@ RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy Nginx config
-COPY default.conf /etc/nginx/conf.d/default.conf
+# Copy Nginx config (comment this line in render deployment)
+# COPY default.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80
