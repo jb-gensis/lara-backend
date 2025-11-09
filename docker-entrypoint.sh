@@ -24,6 +24,9 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     php artisan migrate --force
 fi
 
-# 4️⃣ Start PHP-FPM and Nginx
-php-fpm -D
-nginx -g "daemon off;"
+# Start PHP-FPM in foreground on port 80
+php-fpm -F
+
+# 4️⃣ Start PHP-FPM and Nginx (commented in render)
+# php-fpm -D
+# nginx -g "daemon off;"
