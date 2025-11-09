@@ -1,0 +1,73 @@
+name: Laravel Docker CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      APP_KEY: ${{ secrets.APP_KEY }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_DATABASE: ${{ secrets.DB_DATABASE }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_db
+          MYSQL_USER: laravel_user
+          MYSQL_PASSWORD: laravel_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Cache Composer dependencies
+      - name: Cache Composer
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('src/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker container
+        run: docker build -t laravel-app .
+
+      - name: Run tests inside Docker
+        run: |
+          docker run --rm \
+            -e APP_KEY=${{ secrets.APP_KEY }} \
+            -e DB_CONNECTION=mysql \
+            -e DB_HOST=host.docker.internal \
+            -e DB_PORT=3306 \
+            -e DB_DATABASE=laravel_db \
+            -e DB_USERNAME=laravel_user \
+            -e DB_PASSWORD=laravel_pass \
+            laravel-app sh -c "php artisan migrate --force && php artisan test"
+
+      - name: Deploy to Render
+        uses: render-examples/render-deploy@v1
+        with:
+          apiKey: ${{ secrets.RENDER_API_KEY }}
+          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
