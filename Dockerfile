@@ -34,6 +34,9 @@ RUN composer install --no-dev --optimize-autoloader
 # Copy Nginx config (commented in render)
 # COPY default.conf /etc/nginx/conf.d/default.conf
 
+# If .env doesn't exist, copy from example
+RUN if [ ! -f .env ]; then cp .env.example .env; fi
+
 # Expose port 80
 EXPOSE 80
 
@@ -43,3 +46,5 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Start container
 ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD php artisan key:generate --force && php-fpm
