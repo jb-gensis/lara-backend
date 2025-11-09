@@ -19,6 +19,8 @@ jobs:
       DB_DATABASE: ${{ secrets.DB_DATABASE }}
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
 
     services:
       mysql:
@@ -67,7 +69,8 @@ jobs:
             laravel-app sh -c "php artisan migrate --force && php artisan test"
 
       - name: Deploy to Render
-        uses: render-examples/render-deploy@v1
-        with:
-          apiKey: ${{ secrets.RENDER_API_KEY }}
-          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Triggering Render deploy..."
+          curl -X POST "https://api.render.com/deploy/srv-${RENDER_SERVICE_ID}" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json"
